@@ -82,7 +82,6 @@ def default_user(request,group_id):
 	return render (request, "ndf/analytics_user_base.html", { "group_id" : group_id, "groupid" : group_id})
 
 
-
 @login_required
 @get_execution_time
 def user_list_activities(request,group_id):
@@ -232,7 +231,10 @@ GROUP ANALYTICS VIEWS
 
 @get_execution_time
 def default_group(request,group_id):
-	return redirect('/'+group_id+'/analytics/group/summary')
+	group_name, group_id = get_group_name_id(group_id)
+
+	return render (request, "ndf/analytics_group_base.html", { "group_name" : group_name, "group_id" : group_id, "groupid" : group_id})
+
 
 
 @login_required

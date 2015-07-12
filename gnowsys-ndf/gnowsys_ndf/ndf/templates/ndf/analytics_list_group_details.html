@@ -1,17 +1,8 @@
-{% extends "ndf/base.html" %}
-{% load i18n %}
 {% load ndf_tags %}
 
-
-{% block title %}
- 
- {{"Group Details"}}
- 
- {% endblock %}
-
-
-{% block style %}
-.panel {
+    
+<style>
+    .panel {
         border-style: solid;
         border-width: 1px;
         border-color: #c6f8fb;
@@ -56,66 +47,8 @@
 		margin : 5px;
 	}
 
-{% endblock %}
+</style>
 
-
-{% block meta_content%}
-    <div>
-        <header>
-            <a href="/{{group_id}}/analytics/group/list_activities/">
-                <h2 class="subheader">Group Analytics</h2>
-            </a>
-        </header>
-
-        <!-- Meta content in the (main aside header)-->
-        <section>
-            <div>
-                <div class="panel" style="background-color:#ddd;">
-                    <ul class="side-nav">
-                        
-        <!-- summary -->
-        	<div class="tabs">
-            <a href="/{{group_id}}/analytics/group/summary/">
-                 Summary
-            </a>
-            </div>
-        
-
-        <br><br>
-
-        <!-- activities -->
-        	<div class="tabs">
-            <a href="/{{group_id}}/analytics/group/list_activities/">
-               
-                Activities
-          	</a>
-          	</div>
-
-        <br><br>
- 
-        <!-- members -->
-        	<div class="tabs">
-            <a href="/{{group_id}}/analytics/group/members/">
-                Members
-                
-            </a>
-            </div>
-
-        <br>
-
-    </ul>
-  </div>
-
-                </div>
-              </section>
-
-              <div>
-                  
-              </div>
-            </div>
-{% endblock %}
-
-{% block body_content %}
 
 
 <div class="table_wrapper">
@@ -153,5 +86,3 @@
 	{% endfor %}
 </div>
 
-
-{% endblock %}

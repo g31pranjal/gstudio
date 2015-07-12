@@ -1,0 +1,136 @@
+{% extends "ndf/base.html" %}
+{% load i18n %}
+{% load ndf_tags %}
+
+
+{% block title %}
+ 
+Analytics for group "{{group_name}}"
+
+{% endblock %}
+
+
+{% block style %}
+    .table_wrapper {
+        width : 100%;
+        height : auto;
+        position : relative;
+        float : left;
+        margin : 10px 0px;
+        padding : 10px;
+        font-size : 30px;
+    }
+	.cate {
+        width: 100%;
+        border-bottom : 1px solid #ddd;
+        margin-bottom : 10px;
+    }
+    .date-head {
+    	font-size : 20px;
+    }
+    .c_row {
+    	margin : 10px 100px !important;
+    	height : 45px;
+    }
+    .timestamp {
+    	font-size : 12px;
+    	color : #444;
+    	margin-top : 5px;
+    }
+	.b1 {
+		width : 75%;
+	}
+	.element {
+		margin : 5px;
+	}
+	.panel {
+        border-style: solid;
+        border-width: 1px;
+        border-color: #c6f8fb;
+        margin-bottom: 1.25rem;
+        padding: 1.25rem;
+        background: #f9feff;
+        color: #333333;
+      }
+      .tabs{
+            font-size: 18px;
+        }
+    .button-c {
+        width : 140px;
+        padding :10px;
+        font-weight: bold;
+        color : black;
+        margin-bottom : 10px; !important
+    }
+
+{% endblock %}
+
+
+{% block meta_content%}
+    <div>
+        <header>
+            <a href="/{{group_id}}/analytics/">
+                <h2 class="subheader">Group Analytics</h2>
+            </a>
+        </header>
+
+        <!-- Meta content in the (main aside header)-->
+        <section>
+            <div class="panel" style="background-color:#ddd;">
+                <ul class="side-nav">
+                        
+                    <!-- summary -->
+                    <div class="tabs button small button-c analyticsNavButton" id="" fetch="summary">
+                         Summary
+                    </div>
+                    <br><br>
+                    <!-- activities -->
+                    <div class="tabs button small button-c analyticsNavButton" id="" fetch="list_activities">
+                        Activities
+                    </div>
+                    <br></br>
+                    <!-- members -->
+                    <div class="tabs button small button-c analyticsNavButton" id="" fetch="members">
+                        members
+                    </div>
+                    <br>
+                    </br>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script>
+    $(".analyticsNavButton").click(function() {
+        var route = $(this).attr("fetch")
+        $.ajax({
+            url : "/{{group_id}}/analytics/group/"+route, 
+            data : {},
+            success : function(data) {
+                $("#flushed_content").html(data)
+            } 
+        })  
+    })
+
+    </script>
+
+{% endblock %}
+
+{% block body_content %}
+
+
+<div id="flushed_content"></div>
+
+{% endblock %}
+
+
+
+{% block document_ready %}
+        $.ajax({
+            url : "/{{group_id}}/analytics/group/summary", 
+            data : {},
+            success : function(data) {
+                $("#flushed_content").html(data)
+            } 
+        })  
+{% endblock %}

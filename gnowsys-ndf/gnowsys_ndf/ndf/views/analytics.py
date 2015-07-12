@@ -78,12 +78,14 @@ USER ANALYTICS VIEWS
 
 @get_execution_time
 def default_user(request,group_id):
-	return redirect("/")
+
+	return render (request, "ndf/analytics_user_base.html", { "group_id" : group_id, "groupid" : group_id})
+
+
 
 @login_required
 @get_execution_time
 def user_list_activities(request,group_id):
-
 	'''
 	Lists the detailed activities of the user
 	'''
@@ -123,8 +125,6 @@ def user_app_activities(request,group_id,part):
 	'''
 
 	user = request.user.username
-
-	print part 
 
 	query("user",{ "username" : request.user.username })
 	cursor = analytics_collection.find({"obj."+part : { "$exists" : True}, "action.key" : {"$in" : ['create', 'edit', 'add', 'delete']}, "user.name" : request.user.username}).sort("timestamp",-1)

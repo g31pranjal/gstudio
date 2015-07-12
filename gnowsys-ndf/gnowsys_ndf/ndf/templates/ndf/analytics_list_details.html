@@ -1,17 +1,7 @@
-{% extends "ndf/base.html" %}
-{% load i18n %}
 {% load ndf_tags %}
 
-
-{% block title %}
- 
- {{"User Activity Details"}}
- 
- {% endblock %}
-
-
-{% block style %}
-    .table_wrapper {
+    <style>
+        .table_wrapper {
         width : 100%;
         height : auto;
         position : relative;
@@ -20,30 +10,30 @@
         padding : 10px;
         font-size : 30px;
     }
-	.cate {
+    .cate {
         width: 100%;
         border-bottom : 1px solid #ddd;
         margin-bottom : 10px;
     }
     .date-head {
-    	font-size : 20px;
+        font-size : 20px;
     }
     .c_row {
-    	margin : 10px 100px !important;
-    	height : 45px;
+        margin : 10px 100px !important;
+        height : 45px;
     }
     .timestamp {
-    	font-size : 12px;
-    	color : #444;
-    	margin-top : 5px;
+        font-size : 12px;
+        color : #444;
+        margin-top : 5px;
     }
-	.b1 {
-		width : 75%;
-	}
-	.element {
-		margin : 5px;
-	}
-	.panel {
+    .b1 {
+        width : 75%;
+    }
+    .element {
+        margin : 5px;
+    }
+    .panel {
         border-style: solid;
         border-width: 1px;
         border-color: #c6f8fb;
@@ -54,59 +44,11 @@
       }
       .tabs{
     font-size: 18px;
-    }
+}
+    </style>
 
-{% endblock %}
 
 
-{% block meta_content%}
-    <div>
-        <header>
-            <a href="/{{group_id}}/analytics/group/list_activities/">
-                <h2 class="subheader">User Analytics</h2>
-            </a>
-        </header>
-
-        <!-- Meta content in the (main aside header)-->
-        <section>
-            <div>
-                <div class="panel" style="background-color:#ddd;">
-                    <ul class="side-nav">
-                        
-        <!-- summary -->
-        	<div class="tabs">
-            <a href="/{{group_id}}/analytics/summary/">
-                 Summary
-            </a>
-            </div>
-        
-
-        <br><br>
-
-        <!-- activities -->
-        	<div class="tabs">
-            <a href="/{{group_id}}/analytics/list_activities/">
-               
-                Activities
-          	</a>
-          	</div>
-
-        <br><br>
- 
-        
-        </ul>
-  </div>
-
-                </div>
-              </section>
-
-              <div>
-                  
-              </div>
-            </div>
-{% endblock %}
-
-{% block body_content %}
 
 
 <div class="table_wrapper">
@@ -150,5 +92,3 @@
 	{% endfor %}
 </div>
 
-
-{% endblock %}

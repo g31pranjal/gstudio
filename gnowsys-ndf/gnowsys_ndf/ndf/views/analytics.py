@@ -261,23 +261,23 @@ def group_summary(request,group_id):
 		if i==3:
 			break
 
-	data['forums'] = db['Nodes'].find({"url":"forum", "group_set":group_id, "status":"DRAFT"}).count()	
-	data['threads'] = db['Nodes'].find({"url":"forum/thread", "group_set":group_id, "status":"DRAFT"}).count()
+	data['forums'] = db['Nodes'].find({"url":"forum", "group_set":ObjectId(group_id), "status": { "$in" : ['DRAFT', 'PUBLISSHED']}}).count()	
+	data['threads'] = db['Nodes'].find({"url":"forum/thread", "group_set":ObjectId(group_id), "status":"DRAFT"}).count()
 	regx=re.compile("^Reply of:.*")
-	data['replies'] = db['Nodes'].find({"name": regx,"group_set":group_id, "status":"DRAFT"}).count()
-	data['files'] = db['Nodes'].find({"url":"file", "group_set":group_id, "status":"PUBLISHED"}).count()
-	data['pages'] = db['Nodes'].find({"url":"page", "group_set":group_id, "status":"PUBLISHED"}).count()
+	data['replies'] = db['Nodes'].find({"name": regx,"group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
+	data['files'] = db['Nodes'].find({"url":"file", "group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
+	data['pages'] = db['Nodes'].find({"url":"page", "group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
 	data['total_activities'] = analytics_collection.find({ "group_id" : str(group_id)}).count()
 
 	data['recent'] = {}
 
 	specific_date = datetime.datetime.now() - datetime.timedelta(days=7)
 
-	data['recent']['forums'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.forum" : { '$exists' : 'true'}}).count()
-	data['recent']['threads'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.thread" : { '$exists' : 'true'}}).count()
-	data['recent']['replies'] = analytics_collection.find({"action.key": {"$in" : ['add']}, "group_id": str(group_id), "obj.reply" : { '$exists' : 'true'}}).count()
-	data['recent']['files'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.file" : { '$exists' : 'true'}}).count()
-	data['recent']['pages'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.page" : { '$exists' : 'true'}}).count()
+	data['recent']['forums'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.forum" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['threads'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.thread" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['replies'] = analytics_collection.find({"action.key": {"$in" : ['add']}, "group_id": str(group_id), "obj.reply" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['files'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.file" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['pages'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.page" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
 			
 
 	
@@ -319,6 +319,50 @@ def group_list_activities(request,group_id):
 
 @login_required
 @get_execution_time
+def group_app_activities(request,group_id,part):
+	'''
+	Renders the list of activities of all the members of the group
+	'''
+
+	group_name, group_id = get_group_name_id(group_id)
+
+	query("group",{ "group_id" : group_id })
+
+	specific_date = 0
+	try : 
+		if request.POST['recent'] == '1' :
+			specific_date = datetime.datetime.now() - datetime.timedelta(days=7)
+			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id), "timestamp" : { "$gt" : specific_date }}).sort("timestamp",-1)
+			specific_date = specific_date.strftime("%d %b, %Y")
+		else : 
+			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
+	except : 
+			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
+
+
+	lst=[]
+	i=-1
+	temp_date = datetime.date(1970,1,1)
+	date_col = {}
+
+	for doc in cursor :
+		if temp_date != doc[u'timestamp'].date().strftime("%d %b, %Y") :
+			temp_date = doc[u'timestamp'].date().strftime("%d %b, %Y")
+			date_col = {}
+			date_col[str(temp_date)] = []
+			date_col[str(temp_date)].append(doc)
+			lst.append(date_col)
+			i=i+1
+		else :
+			lst[i][str(temp_date)].append(doc)
+			pass
+
+	return render (request, "ndf/analytics_list_group_details.html",
+															{ "data" : lst, "group_id" : group_id, "groupid" : group_id, "group_name" : group_name, "specific" : True, "app" : part, "recent" : request.POST['recent'], "specific_date" : specific_date})
+
+
+@login_required
+@get_execution_time
 def group_members(request, group_id) :
 
 	'''
@@ -347,42 +391,37 @@ def group_members(request, group_id) :
 	list_of_members = []
 
 	for member in sorted_list_acc_activities : 
-		#try :
-		member_doc = {}
-		member_doc['count'] = member[u'num_of_activities']
+		try :
+			member_doc = {}
+			member_doc['count'] = member[u'num_of_activities']
 
-		author = node_collection.find_one({ "_type" : "Author" , "name" : member[u'_id']})
+			author = node_collection.find_one({ "_type" : "Author" , "name" : member[u'_id']})
 
+			member_doc['name'] = member[u'_id']
+			try : 
+				member_doc['email'] = author[u'email']
+			except :
+				pass
 
-		print member[u'_id']
-		
-		member_doc['name'] = member[u'_id']
-		try : 
-			member_doc['email'] = author[u'email']
-		except :
-			pass
+			for entity in computing_urls :
+				member_doc[entity['key']] = 0
+				if entity['key'] == 'replies' :
+					try :
+						nodes = node_collection.find({"name":entity['name'], "group_set":ObjectId(group_id), "created_by" : author[u'created_by'], "status": entity[u'status']}).count()	
+						member_doc[entity['key']] = nodes
+					except :
+						pass
+				else :
+					try :
+						nodes = node_collection.find({"url":entity['url'], "group_set":ObjectId(group_id), "created_by" : author[u'created_by'], "status": entity[u'status']}).count()
+						member_doc[entity['key']] = nodes
+					except :
+						pass
 
-		for entity in computing_urls :
-			member_doc[entity['key']] = 0
-			if entity['key'] == 'replies' :
-				try :
-					nodes = node_collection.find({"name":entity['name'], "group_set":ObjectId(group_id), "created_by" : author[u'created_by'], "status": entity[u'status']}).count()	
-					member_doc[entity['key']] = nodes
-				except :
-					pass
-			else :
-				try :
-					nodes = node_collection.find({"url":entity['url'], "group_set":ObjectId(group_id), "created_by" : author[u'created_by'], "status": entity[u'status']}).count()
-					member_doc[entity['key']] = nodes
-				except :
-					pass
+			list_of_members.append(member_doc)
 
-		list_of_members.append(member_doc)
-
-		#except : 
-		#	return HttpResponse('Fatal Error')
-
-	print list_of_members
+		except : 
+			return HttpResponse('Fatal Error')
 
 	return render (request, "ndf/analytics_group_members.html",
 																{"data" : list_of_members ,"group_id" : group_id, "groupid" : group_id})

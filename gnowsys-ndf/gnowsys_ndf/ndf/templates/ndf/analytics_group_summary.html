@@ -23,6 +23,8 @@
 		font-size: 30px;
 		font-weight: normal;
 		line-height: 40px;
+        position : relative;
+        float: left;
 	}
 	.element{
 		float: left;
@@ -40,14 +42,22 @@
         border-bottom : 1px solid #ddd
     }
     .panel {
-			  border-style: solid;
-			  border-width: 1px;
-			  border-color: #c6f8fb;
-			  margin-bottom: 1.25rem;
-			  padding: 1.25rem;
-			  background: #f9feff;
-			  color: #333333;
-			}
+	  border-style: solid;
+	  border-width: 1px;
+	  border-color: #c6f8fb;
+	  margin-bottom: 1.25rem;
+	  padding: 1.25rem;
+	  background: #f9feff;
+	  color: #333333;
+	}
+
+    .link-handle {
+        postion : relative;
+        float : left;
+        line-height : 48px;
+        font-size : 20px;
+        cursor : pointer;
+    }
 </style>
 
 
@@ -61,44 +71,49 @@
 
     <div class="element">
         <div class= "heading">Forum :<br>
-            <span class= "content">{{data.forums}}</span>
+            <div class= "content">{{data.forums}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton0" fetch="list_activities/forum"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class= "heading">Pages :<br>
-            <span class= "content"> {{data.pages}}</span>
+            <div class= "content"> {{data.pages}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton0" fetch="list_activities/page"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class= "heading">Threads : <br>
-            <span class="content"> {{data.threads}}</span>
+            <div class="content"> {{data.threads}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton0" fetch="list_activities/thread"></i></div>
         </div>
     </div>
 
 
     <div class="element">
         <div class= "heading">Replies : <br>
-            <span class="content"> {{data.replies}}</span>
+            <div class="content"> {{data.replies}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton0" fetch="list_activities/reply"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Files : <br>
-            <span class="content"> {{data.files}}</span>
+            <div class="content"> {{data.files}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton0" fetch="list_activities/file"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Courses : <br>
-            <span class="content"> --</span>
+            <div class="content"> --</div>
         </div>
     </div>	
 
     <div class="element">
         <div class="heading">Announced Courses : <br>
-            <span class= "content">--</span>
+            <div class= "content">--</div>
         </div>
     </div>
 
@@ -120,43 +135,84 @@
     <div class="cate">Recent Activities <span style="font-size: 15px">(for the last 1 week)</span></div>
     <div class="element">
         <div class="heading">Created/Edited Forums :<br>
-            <span class= "content"> {{data.recent.forums}}</span>
+            <div class= "content"> {{data.recent.forums}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton1" fetch="list_activities/forum"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Pages : <br>
-            <span class= "content">{{data.recent.pages}}</span>
+            <div class= "content">{{data.recent.pages}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton1" fetch="list_activities/page"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Threads : <br>
-            <span class= content> {{data.recent.threads}}</span>
+            <div class= content> {{data.recent.threads}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton1" fetch="list_activities/thread"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Replies :<br>
-            <span class= content> {{data.recent.replies}}</span>
+            <div class= content> {{data.recent.replies}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton1" fetch="list_activities/reply"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Files : <br>
-            <span class= content>{{data.recent.files}}</span>
+            <div class= content>{{data.recent.files}}</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link analyticsViewButton1" fetch="list_activities/file"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Courses : <br>
-            <span class= content> --</span>
+            <div class= content> --</div>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link" fetch="list_activities/file"></i></div>
         </div>
     </div>
 
     <div class="element">
         <div class="heading">Created/Edited Announced Courses : <br>
-            <span class= content> --</span>
+            <div class= content> --</span>
+            <div class="link-handle">&nbsp;&nbsp;<i class="fi-link" fetch="list_activities/file"></i></div>
         </div>
     </div>
 </div>
+
+<script>
+    $(".analyticsViewButton0").click(function() {
+        var route = $(this).attr("fetch")
+        $.ajax({
+            url : "/{{group_id}}/analytics/group/"+route, 
+            data : { 'recent' : 0},
+            method : 'POST',
+            headers: {
+                "X-CSRFToken":csrftoken
+            },
+            success : function(data) {
+                $("#flushed_content").html(data)
+            } 
+        })  
+    })
+
+
+    $(".analyticsViewButton1").click(function() {
+        var route = $(this).attr("fetch")
+        $.ajax({
+            url : "/{{group_id}}/analytics/group/"+route, 
+            data : { 'recent' : 1},
+            method : 'POST',
+            headers: {
+                "X-CSRFToken":csrftoken
+            },
+            success : function(data) {
+                $("#flushed_content").html(data)
+            } 
+        })  
+    })
+
+   </script>

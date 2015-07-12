@@ -53,11 +53,11 @@
 
 <div class="table_wrapper">
 	<div class="cate">
-    {% if specific == False %}
-        Detailed Activities for user : {{user_name}}
-    {% else %}
-        {{app}} Activities for user : {{user_name}}
-    {% endif %}
+        {% if specific == False %}
+            Detailed Activities for user : {{user_name}}
+        {% else %}
+            {{app}} Activities for user : {{user_name}}
+        {% endif %}
     </div>
 	
 	{% for day in data %}

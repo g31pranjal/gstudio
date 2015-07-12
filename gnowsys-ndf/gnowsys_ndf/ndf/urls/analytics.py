@@ -21,6 +21,7 @@ urlpatterns = patterns('gnowsys_ndf.ndf.views.analytics',
 
 	url(r'^/group[/]$', 'default_group', name='default_group'),                      
 	url(r'^/group/list_activities[/]$', 'group_list_activities', name='group_list_activities'),
+	url(r'^/group/list_activities/(?P<part>[^/]+)$', 'group_app_activities', name='group_list_activities'),
 	url(r'^/group/summary[/]$', 'group_summary', name='group_summary'),
 	url(r'^/group/members[/]$', 'group_members', name='group_members'),
 	url(r'^/group/member/(?P<user>[^/]+)$', 'group_member_info_details', name='group_member_info_details')

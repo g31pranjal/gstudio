@@ -90,8 +90,9 @@ def user_list_activities(request,group_id):
 	'''
 
 	user = request.user.username
+	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
 
-	query("user",{ "username" : request.user.username })
+	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
 	cursor = analytics_collection.find({"user.name" : request.user.username}).sort("timestamp",-1)
 	
 	lst = []
@@ -124,8 +125,9 @@ def user_app_activities(request,group_id,part):
 	'''
 
 	user = request.user.username
+	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
 
-	query("user",{ "username" : request.user.username })
+	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
 	cursor = analytics_collection.find({"obj."+part : { "$exists" : True}, "action.key" : {"$in" : ['create', 'edit', 'add', 'delete']}, "user.name" : request.user.username}).sort("timestamp",-1)
 	
 	lst = []
@@ -190,7 +192,10 @@ def user_summary(request,group_id):
 	Renders the summary of the User activities on the Metastudio 
 	'''
 
-	query("user",{ "username" : request.user.username })
+	user = request.user.username
+	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
+
+	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
 	
 	session_info = get_user_sessions(request.user.username)
 
@@ -480,7 +485,6 @@ def query(analytics_type,details) :
 	
 	In case, the analytics_type is 'group', the function resolves the members of the group and calls itself recursively for each user,
 	 to update the analytics_collection.
-	
 	'''
 
 	if analytics_type == "user" :
@@ -497,7 +501,7 @@ def query(analytics_type,details) :
 		if raw_data is None:
 			pass
 		else :
-			normalize(raw_data)
+			normalize(raw_data, details)
 
 	else :
 		group_id = details['group_id']	
@@ -507,13 +511,13 @@ def query(analytics_type,details) :
 			for member in member_list :
 				author = node_collection.find_one({"_type" : "Author", "created_by" : int(member)})
 				if author is not None :
-					query("user",{"username" : author[u'name'] })
+					query("user",{"username" : author[u'name'], "user_id" : author[u'created_by']})
 
 	return 1
 
 
 @get_execution_time
-def normalize(cursor) :
+def normalize(cursor, details) :
 	'''
 		Normailizes the raw data from Benchmark collection so as to filter irrelevent content - 
 		* filtering_list is the list of unwanted actions that gets filtered out
@@ -540,7 +544,7 @@ def normalize(cursor) :
 
 	temp_doc = { u"calling_url" : None , u'last_update' : datetime.datetime(1900, 1, 1, 11, 19, 54)}
 	for doc in cursor :
-		if 'ajax' in str(doc[u'action']) or str(doc[u'action']) in filtering_list :
+		if 'ajax' in str(doc[u'action']) or str(doc[u'action']) in filtering_list or str(doc[u'calling_url']) == "/"+str(details[u"user_id"])+"/dashboard"  :
 			pass
 		else :
 			if temp_doc[u'calling_url'] == doc[u'calling_url'] and temp_doc[u'session_key'] == doc[u'session_key'] and (doc[u'last_update'] - temp_doc[u'last_update'] < datetime.timedelta(0,300)):

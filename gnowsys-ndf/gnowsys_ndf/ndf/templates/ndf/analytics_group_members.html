@@ -25,6 +25,7 @@
     border-bottom : 1px solid #ddd;
     padding-bottom : 5px;
     margin-bottom : 10px;
+    cursor: pointer;
   }
   .element{
     float: left;
@@ -85,7 +86,7 @@
     <div class="cate">Contributors </div>
     {% for x in data %}
         <div class="element">
-            <div class= "content"><i class="fi-torso"></i>&nbsp;&nbsp;<a href="/{{group_id}}/analytics/group/member/{{x.name}}">{{x.name}}&nbsp;<span style="font-size : 20px;"></a></span></div>
+            <div class="content analyticsViewButton" fetch="{{x.name}}"><i class="fi-torso"></i>&nbsp;&nbsp;<span style="font-size : 20px;">{{x.name}}</span></div>
             <div class="email-block"><i class="fi-mail"></i>&nbsp;&nbsp;<a href="mailto:{{x.email}}">{{x.email}}</a></div>
             <div class="total"><span class="email-block">Total Contributions : </span><br>{{x.count}}</div>
 
@@ -97,9 +98,17 @@
     {% endfor %}
 </div>
 
-<script>
-    $(".prompt").click(function() {
-        alert('sd');
-    })
-</script>
 
+<script>
+    $(".analyticsViewButton").click(function() {
+        var route = $(this).attr("fetch")
+        $.ajax({
+            url : "/{{group_id}}/analytics/group/member/"+route, 
+            data : {},
+            success : function(data) {
+                $("#flushed_content").html(data)
+            } 
+        })  
+    })
+
+   </script>

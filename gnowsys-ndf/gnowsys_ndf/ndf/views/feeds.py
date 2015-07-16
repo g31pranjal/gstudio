@@ -20,6 +20,7 @@ from pymongo import Connection
 
 from django.contrib.syndication.views import Feed
 from django.core.urlresolvers import reverse
+from gnowsys_ndf.ndf.views.analytics import query
 
 
 try:
@@ -58,6 +59,7 @@ class activity_feed(Feed):
 	def get_object(self, request, group_id) :
 		data = {}
 		data['group_id'] = group_id
+		query("group",{ "group_id" : group_id })
 		return data
 
 	def get_context_data(self, **kwargs) :

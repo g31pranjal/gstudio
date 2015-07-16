@@ -1567,7 +1567,8 @@ class Analytics(DjangoDocument):
     'user' : dict,
     'obj' : dict,
     'group_id' : basestring,
-    'session_key' : basestring
+    'session_key' : basestring,
+    'type' : basestring
   }
 
   required_fields = ['timestamp']

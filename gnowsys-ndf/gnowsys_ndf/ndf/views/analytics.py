@@ -79,6 +79,9 @@ USER ANALYTICS VIEWS
 @get_execution_time
 def default_user(request,group_id):
 
+	user = request.user.username
+	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
+	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
 	return render (request, "ndf/analytics_user_base.html", { "group_id" : group_id, "groupid" : group_id})
 
 
@@ -92,8 +95,7 @@ def user_list_activities(request,group_id):
 	user = request.user.username
 	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
 
-	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
-	cursor = analytics_collection.find({"user.name" : request.user.username}).sort("timestamp",-1)
+	cursor = analytics_collection.find({"type" : 'data', "user.name" : request.user.username}).sort("timestamp",-1)
 	
 	lst = []
 	temp_date = datetime.date(1970, 1, 1)
@@ -127,8 +129,7 @@ def user_app_activities(request,group_id,part):
 	user = request.user.username
 	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
 
-	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
-	cursor = analytics_collection.find({"obj."+part : { "$exists" : True}, "action.key" : {"$in" : ['create', 'edit', 'add', 'delete']}, "user.name" : request.user.username}).sort("timestamp",-1)
+	cursor = analytics_collection.find({"type" : 'data', "obj."+part : { "$exists" : True}, "action.key" : {"$in" : ['create', 'edit', 'add', 'delete']}, "user.name" : request.user.username}).sort("timestamp",-1)
 	
 	lst = []
 	temp_date = datetime.date(1970, 1, 1)
@@ -157,7 +158,7 @@ def get_user_sessions(user) :
 	Returns the user activities grouped by sessions
 	'''
 
-	cursor = analytics_collection.find({"user.name" : user}).sort("timestamp",-1)
+	cursor = analytics_collection.find({"type" : 'data', "user.name" : user}).sort("timestamp",-1)
 
 	lst = []
 	sessions_list =[]
@@ -194,8 +195,6 @@ def user_summary(request,group_id):
 
 	user = request.user.username
 	author = db["Nodes"].find_one({ "_type" : "Author", "name" : user })
-
-	query("user",{ "username" : request.user.username , "user_id" : author[u'created_by']})
 	
 	session_info = get_user_sessions(request.user.username)
 
@@ -211,12 +210,12 @@ def user_summary(request,group_id):
 
 	data['avg_session_duration'] = duration/data['num_of_sessions']
 
-	data['num_of_pages'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "create", "obj.page" : { '$exists' : 'true'}}).count()
-	data['num_of_files'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "create", "obj.file" : { '$exists' : 'true'}}).count()
-	data['num_of_forums_created'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "create", "obj.forum" : { '$exists' : 'true'}}).count()
-	data['num_of_threads_created'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "create", "obj.thread" : { '$exists' : 'true'}}).count()
-	data['num_of_replies'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "add", "obj.reply" : { '$exists' : 'true'}}).count()
-	data['num_of_tasks'] = analytics_collection.find({ "user.name" : request.user.username, "action.key" : "create", "obj.task" : { '$exists' : 'true'}}).count()
+	data['num_of_pages'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "create", "obj.page" : { '$exists' : 'true'}}).count()
+	data['num_of_files'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "create", "obj.file" : { '$exists' : 'true'}}).count()
+	data['num_of_forums_created'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "create", "obj.forum" : { '$exists' : 'true'}}).count()
+	data['num_of_threads_created'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "create", "obj.thread" : { '$exists' : 'true'}}).count()
+	data['num_of_replies'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "add", "obj.reply" : { '$exists' : 'true'}}).count()
+	data['num_of_tasks'] = analytics_collection.find({"type" : 'data',  "user.name" : request.user.username, "action.key" : "create", "obj.task" : { '$exists' : 'true'}}).count()
 
 	# More statistics can be queried from the anlytics_collection and added here.
 	
@@ -238,6 +237,7 @@ GROUP ANALYTICS VIEWS
 def default_group(request,group_id):
 	group_name, group_id = get_group_name_id(group_id)
 
+	query("group",{ "group_id" : group_id })
 	return render (request, "ndf/analytics_group_base.html", { "group_name" : group_name, "group_id" : group_id, "groupid" : group_id})
 
 
@@ -250,7 +250,6 @@ def group_summary(request,group_id):
 	'''
 	group_name, group_id = get_group_name_id(group_id)
 
-	query("group",{ "group_id" : group_id })
 
 	data = {}
 	
@@ -272,17 +271,17 @@ def group_summary(request,group_id):
 	data['replies'] = db['Nodes'].find({"name": regx,"group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
 	data['files'] = db['Nodes'].find({"url":"file", "group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
 	data['pages'] = db['Nodes'].find({"url":"page", "group_set":ObjectId(group_id), "status":{ "$in" : ['DRAFT', 'PUBLISSHED']}}).count()
-	data['total_activities'] = analytics_collection.find({ "group_id" : str(group_id)}).count()
+	data['total_activities'] = analytics_collection.find({"type" : 'data',  "group_id" : str(group_id)}).count()
 
 	data['recent'] = {}
 
 	specific_date = datetime.datetime.now() - datetime.timedelta(days=7)
 
-	data['recent']['forums'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.forum" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
-	data['recent']['threads'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.thread" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
-	data['recent']['replies'] = analytics_collection.find({"action.key": {"$in" : ['add']}, "group_id": str(group_id), "obj.reply" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
-	data['recent']['files'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.file" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
-	data['recent']['pages'] = analytics_collection.find({"action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.page" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['forums'] = analytics_collection.find({"type" : 'data', "action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.forum" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['threads'] = analytics_collection.find({"type" : 'data', "action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.thread" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['replies'] = analytics_collection.find({"type" : 'data', "action.key": {"$in" : ['add']}, "group_id": str(group_id), "obj.reply" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['files'] = analytics_collection.find({"type" : 'data', "action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.file" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
+	data['recent']['pages'] = analytics_collection.find({"type" : 'data', "action.key": {"$in" : ['create', 'edit']}, "group_id": str(group_id), "obj.page" : { '$exists' : 'true'}, "timestamp" : { "$gt" : specific_date } }).count()
 			
 
 	
@@ -299,8 +298,7 @@ def group_list_activities(request,group_id):
 
 	group_name, group_id = get_group_name_id(group_id)
 
-	query("group",{ "group_id" : group_id })
-	cursor = analytics_collection.find({"group_id" : str(group_id)}).sort("timestamp",-1)
+	cursor = analytics_collection.find({"type" : 'data', "group_id" : str(group_id)}).sort("timestamp",-1)
 	lst=[]
 	i=-1
 	temp_date = datetime.date(1970,1,1)
@@ -331,18 +329,16 @@ def group_app_activities(request,group_id,part):
 
 	group_name, group_id = get_group_name_id(group_id)
 
-	query("group",{ "group_id" : group_id })
-
 	specific_date = 0
 	try : 
 		if request.POST['recent'] == '1' :
 			specific_date = datetime.datetime.now() - datetime.timedelta(days=7)
-			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id), "timestamp" : { "$gt" : specific_date }}).sort("timestamp",-1)
+			cursor = analytics_collection.find({"type" : 'data',  "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id), "timestamp" : { "$gt" : specific_date }}).sort("timestamp",-1)
 			specific_date = specific_date.strftime("%d %b, %Y")
 		else : 
-			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
+			cursor = analytics_collection.find({"type" : 'data',  "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
 	except : 
-			cursor = analytics_collection.find({ "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
+			cursor = analytics_collection.find({"type" : 'data',  "obj."+part : { "$exists" : True} , "action.key" : { "$in" : ['create', 'edit', 'delete', 'add']} ,"group_id" : str(group_id)}).sort("timestamp",-1)
 
 
 	lst=[]
@@ -369,14 +365,11 @@ def group_app_activities(request,group_id,part):
 @login_required
 @get_execution_time
 def group_members(request, group_id) :
-
 	'''
 	Renders the list of members sorted on the basis of their contributions in the group
 	'''
 	group_name, group_id = get_group_name_id(group_id)
 
-	query("group",{ "group_id" : group_id })
-	
 	'''
 	grouping the data  on the basis of user name
 	'''
@@ -440,7 +433,7 @@ def group_member_info_details(request, group_id, user) :
 	user_name = user
 
 	try :
-		cursor = analytics_collection.find({"group_id" : str(group_id), "user.name" : user}).sort("timestamp", -1)
+		cursor = analytics_collection.find({"type" : 'data', "group_id" : str(group_id), "user.name" : user}).sort("timestamp", -1)
 
 		if(cursor.count() != 0) :
 			data = {}
@@ -488,12 +481,12 @@ def query(analytics_type,details) :
 	'''
 
 	if analytics_type == "user" :
-		cursor = analytics_collection.find({"user.name" : str(details['username']) }).sort("timestamp",-1).limit(1)
+		log = analytics_collection.find({"type" : 'log', "user.name" : str(details['username']) }).sort("timestamp",-1).limit(1)
 		latest_timestamp = datetime.datetime(1900,1,1)
-		if cursor is None :
+		if log is None :
 			pass
 		else :
-			for doc in cursor :
+			for doc in log :
 				latest_timestamp = doc['timestamp']
 				break
 		
@@ -501,6 +494,11 @@ def query(analytics_type,details) :
 		if raw_data is None:
 			pass
 		else :
+			analytics_doc=analytics_collection.Analytics()
+			analytics_doc.type = 'log'
+			analytics_doc.timestamp = datetime.datetime.now()
+			analytics_doc.user = { 'name' : details['username'], 'id' : details['user_id']}
+			analytics_doc.save()
 			normalize(raw_data, details)
 
 	else :
@@ -512,6 +510,8 @@ def query(analytics_type,details) :
 				author = node_collection.find_one({"_type" : "Author", "created_by" : int(member)})
 				if author is not None :
 					query("user",{"username" : author[u'name'], "user_id" : author[u'created_by']})
+
+	
 
 	return 1
 
@@ -591,6 +591,7 @@ def initialize_analytics_obj(doc, group_id, obj) :
 	analytics_doc.session_key = doc[u'session_key']
 	analytics_doc.group_id = group_id
 	analytics_doc.obj = { obj : { 'id' : None} } 
+	analytics_doc.type = 'data' 
 	
 	return analytics_doc
 

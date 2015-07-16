@@ -37,7 +37,7 @@ from gnowsys_ndf.ndf.models import node_collection, triple_collection, gridfs_co
 from gnowsys_ndf.ndf.models import node_collection
 from gnowsys_ndf.ndf.views.file import save_file
 from gnowsys_ndf.ndf.views.methods import create_grelation, create_gattribute
-from gnowsys_ndf.ndf.management.commands.data_entry import perform_eval_type
+from gnowsys_ndf.ndf.management.commands.create_theme_topic_hierarchy import create_object, add_to_collection_set
 
 ##############################################################################
 
@@ -52,6 +52,13 @@ theme_gst = node_collection.one({"name": "Theme"})
 theme_item_gst = node_collection.one({"name": "theme_item"})
 topic_gst = node_collection.one({"name": "Topic"})
 nroer_team_id = 1
+
+
+# INFO notes:
+# http://172.16.0.252/sites/default/files/nroer_resources/ (for room no 012)
+# http://192.168.1.102/sites/default/files/nroer_resources/ (for whole ncert campus)
+# http://125.23.112.5/sites/default/files/nroer_resources/ (for public i.e outside campus)
+
 resource_link_common = "http://125.23.112.5/sites/default/files/nroer_resources/"
 
 class Command(BaseCommand):
@@ -774,4 +781,20 @@ def create_resource_gsystem(resource_data):
         print info_message
 
         # print "\n----------", fileobj
+
+        collection_name = resource_data.get('collection', '')
+
+        if collection_name:
+
+            collection_node = node_collection.one({
+                    '_type': 'File',
+                    'group_set': {'$in': [home_group._id]},
+                    'name': unicode(collection_name)
+                })
+
+            if not collection_node:
+                collection_node = create_object(name, member_of_id, content_org=None)
+
+            add_to_collection_set(collection_node, fileobj_oid)
+
         return fileobj_oid

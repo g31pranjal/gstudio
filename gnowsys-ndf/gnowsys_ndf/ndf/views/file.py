@@ -31,7 +31,7 @@ from django.contrib.sites.models import Site
 
 from mongokit import paginator
 
-from gnowsys_ndf.settings import GSTUDIO_SITE_VIDEO, EXTRA_LANG_INFO, GAPPS, MEDIA_ROOT, WETUBE_USERNAME, WETUBE_PASSWORD
+from gnowsys_ndf.settings import GSTUDIO_SITE_VIDEO, EXTRA_LANG_INFO, GAPPS, MEDIA_ROOT, WETUBE_USERNAME, WETUBE_PASSWORD, GSTUDIO_FILE_UPLOAD_FORM
 from gnowsys_ndf.ndf.views.notify import set_notif_val
 from gnowsys_ndf.ndf.org2any import org2html
 from gnowsys_ndf.ndf.models import Node, GSystemType, File, GRelation, STATUS_CHOICES, Triple, node_collection, triple_collection, gridfs_collection
@@ -677,23 +677,21 @@ def paged_file_objs(request, group_id, filetype, page_no):
 @login_required    
 @get_execution_time
 def uploadDoc(request, group_id):
-    ins_objectid  = ObjectId()
-    if ins_objectid.is_valid(group_id) is False :
-        group_ins = node_collection.find_one({'_type': "Group","name": group_id})
-        auth = node_collection.one({'_type': 'Author', 'name': unicode(request.user.username) })
-        if group_ins:
-            group_id = str(group_ins._id)
-        else :
-            auth = node_collection.one({'_type': 'Author', 'name': unicode(request.user.username) })
-            if auth :
-                group_id = str(auth._id)
-    else :
-        pass
+
+    try:
+        group_id = ObjectId(group_id)
+    except:
+        group_name, group_id = get_group_name_id(group_id)
 
     if request.method == "GET":
         page_url = request.GET.get("next", "")
         # template = "ndf/UploadDoc.html"
-        template = "ndf/Uploader_Form.html"
+
+        template = "ndf/UploadDoc.html"
+        
+        if GSTUDIO_FILE_UPLOAD_FORM == 'detail':
+            template = "ndf/Uploader_Form.html"
+
     if  page_url:
         variable = RequestContext(request, {'page_url': page_url,'groupid':group_id,'group_id':group_id})
     else:
@@ -760,7 +758,7 @@ def submitDoc(request, group_id):
                     f, is_video = save_file(each, mtitle, userid, group_id, content_org, tags, img_type, language, usrname, access_policy, license, source, Audience, fileType, subject, level, Based_url, request, map_geojson_data, oid=True)
 
                 else:
-                    title = mtitle + "_" + str(i) #increament title        
+                    title = mtitle + "_" + str(i)  # increament title
                     f, is_video = save_file(each, title, userid, group_id, content_org, tags, img_type, language, usrname, access_policy, license, source, Audience, fileType, subject, level, Based_url, request, map_geojson_data, oid=True)
                     i = i + 1
             else:
@@ -776,15 +774,14 @@ def submitDoc(request, group_id):
             if isinstance(f, list):
               alreadyUploadedFiles_append_temp(f)
               title = mtitle
-        
+
         # str1 = alreadyUploadedFiles
-       
-        if img_type != "": 
+
+        if img_type != "":
             # print "----------1-----------"
             return HttpResponseRedirect(reverse('dashboard', kwargs={'group_id': int(userid)}))
 
-        elif topic_file != "": 
-            
+        elif topic_file != "":
             # print "----------2-----------"
             return HttpResponseRedirect(reverse('add_file', kwargs={'group_id': group_id }))
 
@@ -799,13 +796,16 @@ def submitDoc(request, group_id):
                         # return HttpResponseRedirect(reverse("file_detail", kwargs={'group_id': group_id, "_id": alreadyUploadedFiles[0][0].__str__() }))
             else:
                 group_object = node_collection.one({'_id': ObjectId(group_id)})
-
+                try:
+                    f = ObjectId(f)
+                except:
+                    f = f[0]
                 if group_object.edit_policy == 'EDITABLE_MODERATED' and isinstance(f, ObjectId):
                     # print "----------4-----------"
                     fileobj = node_collection.one({'_id': ObjectId(f)})
                     # newly appended group id in group_set is at last
-                    create_moderator_task(request, fileobj.group_set[len(fileobj.group_set)-1], fileobj._id)
-                    return HttpResponseRedirect(reverse('moderation_status', kwargs={'group_id': group_id, 'node_id': f }))
+                    t = create_moderator_task(request, fileobj.group_set[0], fileobj._id,on_upload=True)
+                    return HttpResponseRedirect(reverse('moderation_status', kwargs={'group_id': fileobj.group_set[1], 'node_id': f }))
                 else:
                     # print "----------5-----------"
                     return HttpResponseRedirect(reverse('file', kwargs={'group_id': group_id }))
